@@ -35,10 +35,14 @@ def find_files(directory_path: Path, extension: str) -> list[Path]:
     Find all files with specified extension in directory.
     
     Args:
-        directory_path: Path to the directory to search
+        directory: Path to the directory to search
         extension: File extension without dot (e.g., "mp4")
         
     Returns:
         List of Path objects for found files
+        
+    Example:
+        >>> find_files(Path("./videos"), "mp4")
+        [Path("video1.mp4"), Path("video2.mp4")]
     """
-    return [path for path in directory_path.glob(f"*.{extension}")]
+    return list(directory_path.glob(f"*.{extension}"))
