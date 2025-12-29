@@ -6,7 +6,7 @@ def generate_new_name(pattern: str, index: int, extension: str) -> str:
     Generate a new filename based on a formatting pattern.
     
     Args:
-        pattern: A format pattern containing a placeholder (e.g., "ASMR_{:03d}").
+        pattern: A format pattern containing a placeholder (e.g., "file_{:03d}").
         index: The file index used to fill the placeholder.
         extension: File extension (without a leading dot).
         
@@ -18,8 +18,8 @@ def generate_new_name(pattern: str, index: int, extension: str) -> str:
         ValueError: If index is negative.
         
     Example:
-        >>> generate_new_name("ASMR_{:03d}", 1, "mp4")
-        "ASMR_001.mp4"
+        >>> generate_new_name("file_{:03d}", 1, "txt")
+        "file_001.txt"
     """
     if not isinstance(index, int):
         raise TypeError(f"Index must be int, got {type(index).__name__}")
@@ -60,3 +60,39 @@ def sort_files(files: list[Path]) -> list[Path]:
         Sorted list of file paths
     """
     return sorted(files, key=lambda f: f.name)
+
+
+def generate_rename_plan(
+    files: list[Path],
+    pattern: str,
+    start_index: int = 1
+) -> list[tuple[Path, Path]]:
+    """
+    Generate rename operations (old_path, new_path) for each file.
+    
+    Args:
+        files: List of files to rename
+        pattern: Naming pattern (e.g., "file_{:03d}")
+        start_index: Starting index for numbering
+        
+    Returns:
+        List of (old_path, new_path) tuples
+        
+    Example:
+        >>> files = [Path("a.mp4"), Path("b.mp4")]
+        >>> generate_rename_plan(files, "video_{:03d}", start_index=1)
+        [(Path("a.mp4"), Path("video_001.mp4")),
+         (Path("b.mp4"), Path("video_002.mp4"))]
+    """
+    operations = []
+
+    for index, old_path in enumerate(files, start=start_index):
+        parent_dir = old_path.parent
+        extention = old_path.suffix[1:]
+
+        new_filename = generate_new_name(pattern, index, extention)
+        new_path = parent_dir / new_filename
+
+        operations.append((old_path, new_path))
+    
+    return operations
