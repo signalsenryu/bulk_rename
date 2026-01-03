@@ -114,3 +114,17 @@ def show_preview(rename_plan: list[tuple[Path, Path]]) -> None:
     """
     for operation in rename_plan:
         print(f"{operation[0]} -> {operation[1]}")
+
+
+def confirm_action(prompt: str = "Proceed? (y/n): ") -> bool:
+    """
+    Ask user for confirmation.
+    
+    Args:
+        prompt: Question to ask user
+        
+    Returns:
+        True if user confirms, False otherwise
+    """
+    user_input = input(prompt)
+    return user_input.strip().lower() in {"y", "yes"}

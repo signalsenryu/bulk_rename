@@ -4,8 +4,10 @@ from src.renamer import (
     sort_files,
     generate_rename_plan,
     show_preview,
+    confirm_action,
 )
 from pathlib import Path
+import pytest
 
 
 def test_generate_new_name_basic():
@@ -224,3 +226,30 @@ def test_show_preview_empty(capsys):
     captured = capsys.readouterr()
 
     assert captured.out == ""
+
+
+@pytest.mark.parametrize(
+    "user_input, expected",
+    [
+        pytest.param("y", True, id="y"),
+        pytest.param("Y", True, id="Y"),
+        pytest.param("yes", True, id="yes"),
+        pytest.param("YES", True, id="YES"),
+        pytest.param("yEs", True, id="yes_mixed"),
+        pytest.param(" Yes ", True, id="yes_spaces"),
+
+        pytest.param("n", False, id="n"),
+        pytest.param("N", False, id="N"),
+        pytest.param("no", False, id="no"),
+        pytest.param("NO", False, id="NO"),
+        pytest.param("nO", False, id="no_mixed"),
+        pytest.param(" No ", False, id="no_spaces"),
+
+        pytest.param("blabla", False, id="invalid"),
+        pytest.param("", False, id="empty"),
+    ],
+)
+def test_confirm_action(monkeypatch, user_input, expected):
+    """Test confirming action with various inputs."""
+    monkeypatch.setattr("builtins.input", lambda _: user_input)
+    assert confirm_action() is expected
