@@ -5,6 +5,7 @@ from src.renamer import (
     generate_rename_plan,
     show_preview,
     confirm_action,
+    save_backup,
 )
 from pathlib import Path
 import pytest
@@ -253,3 +254,29 @@ def test_confirm_action(monkeypatch, user_input, expected):
     """Test confirming action with various inputs."""
     monkeypatch.setattr("builtins.input", lambda _: user_input)
     assert confirm_action() is expected
+
+
+def test_save_backup_nonempty(tmp_path):
+    """Test saving two operations to a backup file."""
+    operations = [
+        (Path("tmp/a.mp4"), Path("tmp/video_001.mp4")),
+        (Path("tmp/b.mp4"), Path("tmp/video_002.mp4")),
+    ]
+
+    backup_file = save_backup(operations, tmp_path)
+
+    assert backup_file.exists()
+    assert backup_file.read_text() == (
+        "tmp/a.mp4 -> tmp/video_001.mp4\n"
+        "tmp/b.mp4 -> tmp/video_002.mp4\n"
+    )
+
+
+def test_save_backup_empty(tmp_path):
+    """Test saving zero operations to a backup file."""
+    operations = []
+
+    backup_file = save_backup(operations, tmp_path)
+
+    assert backup_file.exists()
+    assert backup_file.read_text() == ""

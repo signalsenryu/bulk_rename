@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from datetime import datetime
 
 def generate_new_name(pattern: str, index: int, extension: str) -> str:
     """
@@ -128,3 +128,29 @@ def confirm_action(prompt: str = "Proceed? (y/n): ") -> bool:
     """
     user_input = input(prompt)
     return user_input.strip().lower() in {"y", "yes"}
+
+
+def save_backup(rename_plan: list[tuple[Path, Path]], backup_dir: Path) -> Path:
+    """
+    Save original filenames to a backup file in the specified directory.
+    
+    Args:
+        rename_plan: List of (old_path, new_path) tuples
+        backup_dir: Directory where the backup file will be saved
+        
+    Returns:
+        Path to the created backup file
+        
+    File format:
+        old_name.mp4 -> new_name.mp4
+        another.mp4 -> another_001.mp4
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    backup_path = backup_dir / f"backup_{timestamp}.txt"
+
+    with backup_path.open("w", encoding="utf-8") as backup:
+        for old_operation, new_operation in rename_plan:
+            backup.write(f"{old_operation} -> {new_operation}\n")
+    
+    return backup_path
