@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "bulk-rename-zz-test-12345"
+name = "bulk-rename-signalsenryu"
 version = "0.1.0"
 description = "Bulk rename files based on a pattern"
 readme = "README.md"
@@ -25,6 +25,7 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "ruff>=0.3.0",
 ]
 
 [project.scripts]
@@ -32,4 +33,14 @@ bulk-rename = "bulk_rename.cli:main"
 
 [project.urls]
 Repository = "https://github.com/signalsenryu/bulk-rename"
-PyPI = "https://pypi.org/project/bulk-rename"
+PyPI = "https://pypi.org/project/bulk-rename-signalsenryu"
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+]
