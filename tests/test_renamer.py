@@ -1,4 +1,4 @@
-from src.bulk_rename.cli import (
+from bulk_rename.cli import (
     generate_new_name,
     find_files,
     sort_files,

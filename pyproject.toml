@@ -18,5 +18,13 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
 [project.scripts]
 bulk-rename = "bulk_rename.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
