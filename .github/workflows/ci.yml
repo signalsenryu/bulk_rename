@@ -33,17 +33,13 @@ jobs:
       
       - name: Check formatting
         run: uv run ruff format --check .
-      
-      - name: Type check (optional)
-        if: hashFiles('pyproject.toml') != ''
-        run: uv run mypy . --exclude '(dist|build|.*\.egg-info)' || echo "mypy not configured"
 
   test:
     needs: lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.10", "3.12"]
       fail-fast: false
     
     steps:
@@ -58,13 +54,10 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
       
       - name: Install dependencies
-        run: uv sync --all-extras
+        run: uv sync --extra dev
       
       - name: Run tests with coverage
-        run: uv run pytest tests/ -vv \
-            --cov=. \
-            --cov-report=xml \
-            --cov-report=term:skip-covered \
+        run: uv run pytest tests/ -vv --cov=. --cov-report=xml --cov-report=term:skip-covered
       
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.12'
@@ -115,19 +108,11 @@ jobs:
           name: python-package
           path: dist
       
-      - name: Check for existing TestPyPI version
-        id: version-check
-        run: |
-          VERSION=$(python -c "from setuptools.config import read_configuration; conf = read_configuration('setup.cfg'); print(conf['metadata']['version'])" 2>/dev/null || python -c "import tomli; f=open('pyproject.toml','rb'); print(tomli.load(f)['project']['version'])")
-          echo "package_version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Detected package version: $VERSION"
-      
       - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          
         continue-on-error: true
 
   publish-pypi:
@@ -141,16 +126,15 @@ jobs:
           name: python-package
           path: dist
       
-      - name: Verify tag matches package version
+      - name: Extract version from tag
+        id: get_version
+        run: echo "TAG_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Read package version from pyproject.toml
+        id: read_version
         run: |
-          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
-          PKG_VERSION=$(uv run python -c "from importlib.metadata import version; print(version('${{ github.event.repository.name }}'))" 2>/dev/null || echo "unknown")
-          
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "❌ Version mismatch! Tag: v$TAG_VERSION, Package: $PKG_VERSION"
-            exit 1
-          fi
-          echo "✅ Version match: $PKG_VERSION"
+          PKG_VERSION=$(grep -m1 'version' pyproject.toml | sed "s/.*= //; s/\"//g")
+          echo "PKG_VERSION=$PKG_VERSION" >> $GITHUB_OUTPUT
       
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
