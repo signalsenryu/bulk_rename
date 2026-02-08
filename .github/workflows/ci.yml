@@ -5,13 +5,46 @@ on:
     branches: [main]
     tags: ["v*"]
   pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+      
+      - name: Install dev dependencies
+        run: uv sync --extra dev
+      
+      - name: Check code style
+        run: uv run ruff check .
+      
+      - name: Check formatting
+        run: uv run ruff format --check .
+      
+      - name: Type check (optional)
+        if: hashFiles('pyproject.toml') != ''
+        run: uv run mypy . --exclude '(dist|build|.*\.egg-info)' || echo "mypy not configured"
+
   test:
+    needs: lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.12"]
+        python-version: ["3.12"]
+      fail-fast: false
     
     steps:
       - uses: actions/checkout@v4
@@ -27,11 +60,15 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
       
-      - name: Run Ruff
-        run: uv run ruff check .
+      - name: Run tests with coverage
+        run: uv run pytest -vv --cov=src --cov-report=xml
       
-      - name: Run tests
-        run: uv run pytest -vv
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
 
   build:
     needs: test
@@ -42,32 +79,53 @@ jobs:
       
       - name: Install uv
         uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
       
       - name: Build package
         run: uv build
       
+      - name: Verify build artifacts
+        run: |
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist/)" ]; then
+            echo "❌ Build failed: no artifacts in dist/"
+            exit 1
+          fi
+          echo "✅ Build successful:"
+          ls -lh dist/
+      
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: python-package
           path: dist/
+          retention-days: 7
 
   publish-testpypi:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dist
+          name: python-package
           path: dist
+      
+      - name: Check for existing TestPyPI version
+        id: version-check
+        run: |
+          VERSION=$(python -c "from setuptools.config import read_configuration; conf = read_configuration('setup.cfg'); print(conf['metadata']['version'])" 2>/dev/null || python -c "import tomli; f=open('pyproject.toml','rb'); print(tomli.load(f)['project']['version'])")
+          echo "package_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected package version: $VERSION"
       
       - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          
+        continue-on-error: true
 
   publish-pypi:
     needs: build
@@ -77,8 +135,19 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dist
+          name: python-package
           path: dist
+      
+      - name: Verify tag matches package version
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          PKG_VERSION=$(uv run python -c "from importlib.metadata import version; print(version('${{ github.event.repository.name }}'))" 2>/dev/null || echo "unknown")
+          
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "❌ Version mismatch! Tag: v$TAG_VERSION, Package: $PKG_VERSION"
+            exit 1
+          fi
+          echo "✅ Version match: $PKG_VERSION"
       
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

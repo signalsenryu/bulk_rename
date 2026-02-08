@@ -9,19 +9,19 @@ from importlib.metadata import version, PackageNotFoundError
 def generate_new_name(pattern: str, index: int, extension: str) -> str:
     """
     Generate a new filename based on a formatting pattern.
-    
+
     Args:
         pattern: A format pattern containing a placeholder (e.g., "file_{:03d}").
         index: The file index used to fill the placeholder.
         extension: File extension (without a leading dot).
-        
+
     Returns:
         The new filename.
-        
+
     Raises:
         TypeError: If index is not an integer.
         ValueError: If index is negative.
-        
+
     Example:
         >>> generate_new_name("file_{:03d}", 1, "txt")
         "file_001.txt"
@@ -39,14 +39,14 @@ def generate_new_name(pattern: str, index: int, extension: str) -> str:
 def find_files(directory: Path, extension: str) -> list[Path]:
     """
     Find all files with specified extension in directory.
-    
+
     Args:
         directory: Path to the directory to search
         extension: File extension without dot (e.g., "mp4")
-        
+
     Returns:
         List of Path objects for found files
-        
+
     Example:
         >>> find_files(Path("./videos"), "mp4")
         [Path("video1.mp4"), Path("video2.mp4")]
@@ -57,10 +57,10 @@ def find_files(directory: Path, extension: str) -> list[Path]:
 def sort_files(files: list[Path]) -> list[Path]:
     """
     Sort files alphabetically by name.
-    
+
     Args:
         files: List of file paths
-        
+
     Returns:
         Sorted list of file paths
     """
@@ -68,21 +68,19 @@ def sort_files(files: list[Path]) -> list[Path]:
 
 
 def generate_rename_plan(
-    files: list[Path],
-    pattern: str,
-    start_index: int = 1
+    files: list[Path], pattern: str, start_index: int = 1
 ) -> list[tuple[Path, Path]]:
     """
     Generate rename plan (old_path, new_path) for each file.
-    
+
     Args:
         files: List of files to rename
         pattern: Naming pattern (e.g., "file_{:03d}")
         start_index: Starting index for numbering
-        
+
     Returns:
         List of (old_path, new_path) tuples
-        
+
     Example:
         >>> files = [Path("a.mp4"), Path("b.mp4")]
         >>> generate_rename_plan(files, "video_{:03d}", start_index=1)
@@ -99,22 +97,20 @@ def generate_rename_plan(
         new_path = parent_dir / new_filename
 
         plan.append((old_path, new_path))
-    
+
     return plan
 
 
-def validate_rename_plan(
-    rename_plan: list[tuple[Path, Path]]
-) -> list[tuple[Path, Path, str]]:
+def validate_rename_plan(rename_plan: list[tuple[Path, Path]]) -> list[tuple[Path, Path, str]]:
     """
     Validate rename operations before execution.
-    
+
     Args:
         rename_plan: List of (old_path, new_path) tuples
-        
+
     Returns:
         List of (old_path, new_path, error_message) for problematic operations
-        
+
     Checks:
         - Source file is not found
         - Target file already exists
@@ -122,7 +118,6 @@ def validate_rename_plan(
     conflicts = []
 
     for old_path, new_path in rename_plan:
-
         if not old_path.exists():
             conflicts.append((old_path, new_path, "Source file is not found"))
 
@@ -135,27 +130,26 @@ def validate_rename_plan(
 def show_preview(rename_plan: list[tuple[Path, Path]]) -> None:
     """
     Display preview of rename operations.
-    
+
     Args:
         rename_plan: List of (old_path, new_path) tuples
-        
+
     Returns:
         None (prints to console)
-        
+
     Example output:
         ✅ a.mp4 -> video_001.mp4
         ❌ b.mp4 -> video_002.mp4 [Target file already exists]
     """
     conflicts = validate_rename_plan(rename_plan)
-    
+
     conflict_dict = {(old, new): error for old, new, error in conflicts}
 
     for old_path, new_path in rename_plan:
-
         if (old_path, new_path) in conflict_dict:
             error_msg = conflict_dict[(old_path, new_path)]
             print(f"❌ {old_path} -> {new_path} [{error_msg}]")
-            
+
         else:
             print(f"✅ {old_path} -> {new_path}")
 
@@ -163,10 +157,10 @@ def show_preview(rename_plan: list[tuple[Path, Path]]) -> None:
 def confirm_action(prompt: str = "Proceed? (y/n): ") -> bool:
     """
     Ask user for confirmation.
-    
+
     Args:
         prompt: Question to ask user
-        
+
     Returns:
         True if user confirms, False otherwise
     """
@@ -177,14 +171,14 @@ def confirm_action(prompt: str = "Proceed? (y/n): ") -> bool:
 def save_backup(rename_plan: list[tuple[Path, Path]], backup_dir: Path) -> Path:
     """
     Save original filenames to a backup file in the specified directory.
-    
+
     Args:
         rename_plan: List of (old_path, new_path) tuples
         backup_dir: Directory where the backup file will be saved
-        
+
     Returns:
         Path to the created backup file
-        
+
     File format:
         old_name.mp4 -> new_name.mp4
         another.mp4 -> another_001.mp4
@@ -196,17 +190,17 @@ def save_backup(rename_plan: list[tuple[Path, Path]], backup_dir: Path) -> Path:
     with backup_path.open("w", encoding="utf-8") as backup:
         for old_path, new_path in rename_plan:
             backup.write(f"{old_path} -> {new_path}\n")
-    
+
     return backup_path
 
 
 def execute_rename(rename_plan: list[tuple[Path, Path]]) -> None:
     """
     Execute rename operations after validation, skipping conflics, and display results.
-    
+
     Args:
         rename_plan: List of (old_path, new_path) tuples
-    
+
     Returns:
         None (prints to console)
 
@@ -253,27 +247,41 @@ def parse_args():
     )
 
     parser.add_argument(
-        "-d", "--path", type=Path, required=True, 
+        "-d",
+        "--path",
+        type=Path,
+        required=True,
         help="Directory containing the files to rename",
     )
 
     parser.add_argument(
-        "-p", "--pattern", type=str, required=True, 
+        "-p",
+        "--pattern",
+        type=str,
+        required=True,
         help="Naming pattern for new files (e.g., 'file_{:03d}')",
     )
 
     parser.add_argument(
-        "-e", "--extension", type=str, required=True, 
+        "-e",
+        "--extension",
+        type=str,
+        required=True,
         help="File extension to filter (e.g., 'mp4')",
     )
 
     parser.add_argument(
-        "-s", "--start", default=1, type=int, 
+        "-s",
+        "--start",
+        default=1,
+        type=int,
         help="Starting index for numbering (default: 1)",
     )
 
     parser.add_argument(
-        "--version", action="version", version=__version__, 
+        "--version",
+        action="version",
+        version=__version__,
         help="Show program's version number and exit",
     )
 
@@ -283,22 +291,22 @@ def parse_args():
 def main():
     """Entry point for CLI."""
     args = parse_args()
-    
+
     if not args.path.exists():
         print(f"Path {args.path} doesn't exist", file=sys.stderr)
         sys.exit(1)
     elif not os.access(args.path, os.R_OK):
         print(f"No permission to read {args.path}", file=sys.stderr)
         sys.exit(1)
-    
+
     files = find_files(args.path, args.extension)
-    
+
     if not files:
         print(f"No .{args.extension} files found in {args.path}", file=sys.stderr)
         sys.exit(1)
 
     sorted_files = sort_files(files)
-    
+
     plan = generate_rename_plan(sorted_files, args.pattern, args.start)
 
     conflicts = validate_rename_plan(plan)
@@ -312,7 +320,7 @@ def main():
             sys.exit(0)
     elif not confirm_action():
         sys.exit(0)
-    
+
     if not os.access(args.path, os.W_OK):
         print(f"No permission to write {args.path}", file=sys.stderr)
         sys.exit(1)
@@ -323,7 +331,7 @@ def main():
     if not effective_ops:
         print("Nothing to rename. All operations are conflics.")
         sys.exit(0)
-    
+
     save_backup(effective_ops, args.path)
 
     execute_rename(effective_ops)

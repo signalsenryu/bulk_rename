@@ -2,7 +2,7 @@
 
 A CLI utility for bulk renaming files based on a pattern.
 
-[![PyPI version](https://badge.fury.io/py/bulk-rename-signalsenryu.svg)](https://pypi.org/project/bulk-rename-signalsenryu)
+[![PyPI version](https://img.shields.io/pypi/v/bulk-rename-signalsenryu.svg)](https://pypi.org/project/bulk-rename-signalsenryu)
 
 ## Installation
 
@@ -146,7 +146,7 @@ Or even simpler with uv sync:
 ```bash
 git clone https://github.com/signalsenryu/bulk-rename.git
 cd bulk-rename
-uv sync --all-extras
+uv sync --extra dev
 ```
 
 ### Run Tests

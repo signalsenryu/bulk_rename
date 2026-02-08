@@ -42,9 +42,9 @@ def test_find_files(tmp_path):
     (tmp_path / "video1.mp4").touch()
     (tmp_path / "video2.mp4").touch()
     (tmp_path / "image.jpg").touch()
-    
+
     result = find_files(tmp_path, "mp4")
-    
+
     assert set(result) == {tmp_path / "video1.mp4", tmp_path / "video2.mp4"}
 
 
@@ -180,9 +180,9 @@ def test_generate_rename_plan_preserves_directory():
         Path("/tmp/other/b.mp4"),
         Path("relative/path/c.mp4"),
     ]
-    
+
     result = generate_rename_plan(files, "video_{:02d}", 1)
-    
+
     assert result == [
         (Path("/home/user/videos/a.mp4"), Path("/home/user/videos/video_01.mp4")),
         (Path("/tmp/other/b.mp4"), Path("/tmp/other/video_02.mp4")),
@@ -196,9 +196,9 @@ def test_generate_rename_plan_same_directory():
         Path("a.mp4"),
         Path("b.mp4"),
     ]
-    
+
     result = generate_rename_plan(files, "video_{:02d}", 1)
-    
+
     assert result == [
         (Path("a.mp4"), Path("video_01.mp4")),
         (Path("b.mp4"), Path("video_02.mp4")),
@@ -209,9 +209,9 @@ def test_validate_rename_plan_no_conflicts(tmp_path):
     """All files exist, no target conflicts."""
     (tmp_path / "a.mp4").touch()
     plan = [(tmp_path / "a.mp4", tmp_path / "video_001.mp4")]
-    
+
     conflicts = validate_rename_plan(plan)
-    
+
     assert conflicts == []
 
 
@@ -219,11 +219,11 @@ def test_validate_rename_plan_target_exists(tmp_path):
     """Target file already exists."""
     (tmp_path / "a.mp4").touch()
     (tmp_path / "video_001.mp4").touch()
-    
+
     plan = [(tmp_path / "a.mp4", tmp_path / "video_001.mp4")]
-    
+
     conflicts = validate_rename_plan(plan)
-    
+
     assert len(conflicts) == 1
     assert conflicts[0][0] == tmp_path / "a.mp4"
     assert conflicts[0][1] == tmp_path / "video_001.mp4"
@@ -233,9 +233,9 @@ def test_validate_rename_plan_target_exists(tmp_path):
 def test_validate_rename_plan_source_missing(tmp_path):
     """Source file doesn't exist."""
     plan = [(tmp_path / "a.mp4", tmp_path / "video_001.mp4")]
-    
+
     conflicts = validate_rename_plan(plan)
-    
+
     assert len(conflicts) == 1
     assert "not found" in conflicts[0][2].lower()
 
@@ -245,9 +245,9 @@ def test_validate_rename_plan_one_error_per_operation(tmp_path):
     (tmp_path / "video_001.mp4").touch()
 
     plan = [(tmp_path / "b.mp4", tmp_path / "video_001.mp4")]
-    
+
     conflicts = validate_rename_plan(plan)
-    
+
     assert len(conflicts) == 1
 
 
@@ -255,15 +255,15 @@ def test_show_preview_success(capsys, tmp_path):
     """Test showing preview without conflicts."""
     (tmp_path / "a.mp4").touch()
     (tmp_path / "b.mp4").touch()
-    
+
     plan = [
         (tmp_path / "a.mp4", tmp_path / "video_001.mp4"),
         (tmp_path / "b.mp4", tmp_path / "video_002.mp4"),
     ]
-    
+
     show_preview(plan)
     captured = capsys.readouterr()
-    
+
     assert captured.out == (
         f"✅ {tmp_path}/a.mp4 -> {tmp_path}/video_001.mp4\n"
         f"✅ {tmp_path}/b.mp4 -> {tmp_path}/video_002.mp4\n"
@@ -308,14 +308,12 @@ def test_show_preview_empty(capsys):
         pytest.param("YES", True, id="YES"),
         pytest.param("yEs", True, id="yes_mixed"),
         pytest.param(" Yes ", True, id="yes_spaces"),
-
         pytest.param("n", False, id="n"),
         pytest.param("N", False, id="N"),
         pytest.param("no", False, id="no"),
         pytest.param("NO", False, id="NO"),
         pytest.param("nO", False, id="no_mixed"),
         pytest.param(" No ", False, id="no_spaces"),
-
         pytest.param("blabla", False, id="invalid"),
         pytest.param("", False, id="empty"),
     ],
@@ -337,8 +335,7 @@ def test_save_backup_nonempty(tmp_path):
 
     assert backup_file.exists()
     assert backup_file.read_text() == (
-        "tmp/a.mp4 -> tmp/video_001.mp4\n"
-        "tmp/b.mp4 -> tmp/video_002.mp4\n"
+        "tmp/a.mp4 -> tmp/video_001.mp4\ntmp/b.mp4 -> tmp/video_002.mp4\n"
     )
 
 
@@ -361,10 +358,10 @@ def test_execute_rename_nonempty(tmp_path, capsys):
         (tmp_path / "a.mp4", tmp_path / "video_001.mp4"),
         (tmp_path / "b.mp4", tmp_path / "video_002.mp4"),
     ]
-    
+
     execute_rename(plan)
     expected = capsys.readouterr()
-    
+
     assert (tmp_path / "video_001.mp4").exists()
     assert (tmp_path / "video_002.mp4").exists()
     assert expected.out == ""
@@ -374,7 +371,7 @@ def test_execute_rename_conflics(tmp_path, capsys):
     """Test executing rename for a plan with conflicts."""
     (tmp_path / "b.mp4").touch()
     (tmp_path / "video_002.mp4").touch()
-    
+
     plan = [
         (tmp_path / "a.mp4", tmp_path / "video_001.mp4"),
         (tmp_path / "b.mp4", tmp_path / "video_002.mp4"),
