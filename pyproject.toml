@@ -39,3 +39,6 @@ select = [
     "E", # pycodestyle errors
     "F", # pyflakes
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
