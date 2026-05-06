@@ -285,6 +285,13 @@ def parse_args():
         help="Show program's version number and exit",
     )
 
+    parser.add_argument(
+        "-dr",
+        "--dry-run",
+        action="store_true",
+        help="Preview rename operations without renaming files",
+    )
+
     return parser.parse_args()
 
 
@@ -313,6 +320,10 @@ def main():
 
     show_preview(plan)
 
+    if args.dry_run:
+        print("\n[Dry run] No files were renamed.")
+        sys.exit(0)
+    
     if conflicts:
         suffix = "s" if len(conflicts) != 1 else ""
         print(f"\nFound {len(conflicts)} conflict{suffix}")
