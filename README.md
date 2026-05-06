@@ -117,6 +117,7 @@ Continue with skipping conflicts? (y/n): n
 - ✅ Backup file creation with timestamps
 - ✅ Alphabetical sorting of source files
 - ✅ Customizable numbering patterns
+- ✅ Dry run mode
 
 ## Development
 
@@ -170,7 +171,7 @@ bulk-rename/
 │       ├── __main__.py
 │       └── cli.py
 ├── tests/
-│   └── test_renamer.py
+│   └── test_cli.py
 ├── pyproject.toml
 └── README.md
 ```

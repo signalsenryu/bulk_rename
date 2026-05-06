@@ -1,16 +1,18 @@
-from bulk_rename.cli import (
-    generate_new_name,
-    find_files,
-    sort_files,
-    generate_rename_plan,
-    show_preview,
-    confirm_action,
-    save_backup,
-    validate_rename_plan,
-    execute_rename,
-)
 from pathlib import Path
+
 import pytest
+
+from bulk_rename.cli import (
+    confirm_action,
+    execute_rename,
+    find_files,
+    generate_new_name,
+    generate_rename_plan,
+    save_backup,
+    show_preview,
+    sort_files,
+    validate_rename_plan,
+)
 
 
 def test_generate_new_name_basic():

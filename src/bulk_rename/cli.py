@@ -1,9 +1,9 @@
-from pathlib import Path
-from datetime import datetime
 import argparse
-import sys
 import os
-from importlib.metadata import version, PackageNotFoundError
+import sys
+from datetime import datetime
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
 
 
 def generate_new_name(pattern: str, index: int, extension: str) -> str:
@@ -285,6 +285,13 @@ def parse_args():
         help="Show program's version number and exit",
     )
 
+    parser.add_argument(
+        "-dr",
+        "--dry-run",
+        action="store_true",
+        help="Preview rename operations without renaming files",
+    )
+
     return parser.parse_args()
 
 
@@ -312,6 +319,10 @@ def main():
     conflicts = validate_rename_plan(plan)
 
     show_preview(plan)
+
+    if args.dry_run:
+        print("\n[Dry run] No files were renamed.")
+        sys.exit(0)
 
     if conflicts:
         suffix = "s" if len(conflicts) != 1 else ""
